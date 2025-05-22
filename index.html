@@ -1,218 +1,267 @@
-<script type="text/babel" data-presets="react">
-  function TradeJournalForm() {
-    const [entries, setEntries] = React.useState([]);
-    const [formData, setFormData] = React.useState({
-      tradeId: '',
-      date: '', direction: '', entry: '', entryTag: '', exit: '', exitTag: '',
-      takerRatio: '', divergences: '', macEclipse: '', setup: '',
-      openingNotes: '', notes: '',
-      rr: '', 
-      openingScreenshotFiles: [], closingScreenshotFiles: [],
-      openingScreenshotLinks: [], closingScreenshotLinks: []
-    });
-
-    const uploadScreenshot = async (file) => {
-      const form = new FormData();
-      form.append("screenshot", file);
-      try {
-        const res = await fetch("https://b56e62c0-ef1f-45ae-abac-92f2f04da756-00-q2xhkf1bhchx.picard.replit.dev/upload", {
-          method: "POST",
-          body: form,
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Trade Journal</title>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        background-color: #1e1e1e;
+        color: #ffffff;
+        font-family: sans-serif;
+      }
+      input, select, textarea, button {
+        display: block;
+        margin: 10px 0;
+        padding: 5px;
+        background-color: #2e2e2e;
+        color: #ffffff;
+        border: 1px solid #444;
+        border-radius: 4px;
+      }
+      textarea {
+        width: 100%;
+        resize: vertical;
+      }
+      button {
+        background-color: #4caf50;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      .entry {
+        border: 1px solid #444;
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #2a2a2a;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/react@17/umd/react.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/babel-standalone@6/babel.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel" data-presets="env,react">
+      function TradeJournalForm() {
+        const [entries, setEntries] = React.useState([]);
+        const [formData, setFormData] = React.useState({
+          tradeId: '',
+          date: '', direction: '', entry: '', entryTag: '', exit: '', exitTag: '',
+          takerRatio: '', divergences: '', macEclipse: '', setup: '',
+          openingNotes: '', notes: '',
+          rr: '', 
+          openingScreenshotFiles: [], closingScreenshotFiles: [],
+          openingScreenshotLinks: [], closingScreenshotLinks: []
         });
-        const data = await res.json();
-        return data.link;
-      } catch (err) {
-        console.error("Upload error:", err);
-        return "";
-      }
-    };
 
-    const handleChange = (e) => {
-      const { name, value, files } = e.target;
-      if (files) {
-        setFormData(prev => ({ ...prev, [name]: Array.from(files) }));
-      } else {
-        setFormData(prev => ({ ...prev, [name]: value }));
-      }
-    };
+        const uploadScreenshot = async (file) => {
+          const form = new FormData();
+          form.append("screenshot", file);
+          try {
+            const res = await fetch("https://b56e62c0-ef1f-45ae-abac-92f2f04da756-00-q2xhkf1bhchx.picard.replit.dev/upload", {
+              method: "POST",
+              body: form,
+            });
+            const data = await res.json();
+            return data.link;
+          } catch (err) {
+            console.error("Upload error:", err);
+            return "";
+          }
+        };
 
-    const handleSubmit = async (e) => {
-      e.preventDefault();
+        const handleChange = (e) => {
+          const { name, value, files } = e.target;
+          if (files) {
+            setFormData(prev => ({ ...prev, [name]: Array.from(files) }));
+          } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+          }
+        };
 
-      const uploadedOpening = await Promise.all(
-        (formData.openingScreenshotFiles || []).map(uploadScreenshot)
-      );
-      const uploadedClosing = await Promise.all(
-        (formData.closingScreenshotFiles || []).map(uploadScreenshot)
-      );
+        const handleSubmit = async (e) => {
+          e.preventDefault();
 
-      const aiTags = [
-        formData.entryTag,
-        formData.rr,
-        formData.exitTag,
-        formData.takerRatio,
-        formData.divergences,
-        formData.macEclipse
-      ].filter(Boolean);
+          const uploadedOpening = await Promise.all(
+            (formData.openingScreenshotFiles || []).map(uploadScreenshot)
+          );
+          const uploadedClosing = await Promise.all(
+            (formData.closingScreenshotFiles || []).map(uploadScreenshot)
+          );
 
-      const textFields = `${formData.setup} ${formData.openingNotes} ${formData.notes}`.toLowerCase();
+          const aiTags = [
+            formData.entryTag,
+            formData.rr,
+            formData.exitTag,
+            formData.takerRatio,
+            formData.divergences,
+            formData.macEclipse
+          ].filter(Boolean);
 
-      const patternTags = [];
-      if (textFields.includes("exit") && textFields.includes("profit")) patternTags.push("Premature Exit in Profit");
-      if (textFields.includes("exit") && textFields.includes("loss")) patternTags.push("Premature Exit in Loss");
-      if (textFields.includes("1r") && textFields.includes("breakeven")) patternTags.push("1R Breakeven");
-      if (textFields.includes("held") && textFields.includes("target")) patternTags.push("Held to Target");
-      if (textFields.includes("solid") && textFields.includes("entry")) patternTags.push("Solid Entry");
+          const textFields = `${formData.setup} ${formData.openingNotes} ${formData.notes}`.toLowerCase();
 
-      const pnl = formData.entry && formData.exit ?
-        (formData.direction === 'Long'
-          ? (parseFloat(formData.exit) - parseFloat(formData.entry))
-          : (parseFloat(formData.entry) - parseFloat(formData.exit)))
-        : null;
+          const patternTags = [];
+          if (textFields.includes("exit") && textFields.includes("profit")) patternTags.push("Premature Exit in Profit");
+          if (textFields.includes("exit") && textFields.includes("loss")) patternTags.push("Premature Exit in Loss");
+          if (textFields.includes("1r") && textFields.includes("breakeven")) patternTags.push("1R Breakeven");
+          if (textFields.includes("held") && textFields.includes("target")) patternTags.push("Held to Target");
+          if (textFields.includes("solid") && textFields.includes("entry")) patternTags.push("Solid Entry");
 
-      const finalData = {
-        tradeId: formData.tradeId || Date.now().toString(),
-        ...formData,
-        openingScreenshotLinks: uploadedOpening,
-        closingScreenshotLinks: uploadedClosing,
-        aiTags: [...aiTags, ...patternTags],
-        pnl: pnl
-      };
+          const pnl = formData.entry && formData.exit ?
+            (formData.direction === 'Long'
+              ? (parseFloat(formData.exit) - parseFloat(formData.entry))
+              : (parseFloat(formData.entry) - parseFloat(formData.exit)))
+            : null;
 
-      try {
-        await fetch("https://script.google.com/macros/s/AKfycbyYgFBmsZSqI6xns2e2X2ax-aHwM4GjkqHXYFv9ThO7dAsLdurm9974yjwZejmXwLdb/exec", {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(finalData),
-        });
-      } catch (err) {
-        console.error("Error sending to Google Sheets:", err);
-      }
+          const finalData = {
+            tradeId: formData.tradeId || Date.now().toString(),
+            ...formData,
+            openingScreenshotLinks: uploadedOpening,
+            closingScreenshotLinks: uploadedClosing,
+            aiTags: [...aiTags, ...patternTags],
+            pnl: pnl
+          };
 
-      setEntries([finalData, ...entries]);
-      setFormData({
-        date: '', direction: '', entry: '', entryTag: '', exit: '', exitTag: '',
-        takerRatio: '', divergences: '', macEclipse: '', setup: '',
-        openingNotes: '', notes: '', rr: '', status: 'Open',
-        openingScreenshotFiles: [], closingScreenshotFiles: [],
-        openingScreenshotLinks: [], closingScreenshotLinks: []
-      });
+          try {
+            await fetch("https://script.google.com/macros/s/AKfycbyYgFBmsZSqI6xns2e2X2ax-aHwM4GjkqHXYFv9ThO7dAsLdurm9974yjwZejmXwLdb/exec", {
+              method: "POST",
+              mode: "no-cors",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(finalData),
+            });
+          } catch (err) {
+            console.error("Error sending to Google Sheets:", err);
+          }
 
-      document.querySelector("input[name='openingScreenshotFiles']").value = "";
-      document.querySelector("input[name='closingScreenshotFiles']").value = "";
-    };
+          setEntries([finalData, ...entries]);
+          setFormData({
+            date: '', direction: '', entry: '', entryTag: '', exit: '', exitTag: '',
+            takerRatio: '', divergences: '', macEclipse: '', setup: '',
+            openingNotes: '', notes: '', rr: '', status: 'Open',
+            openingScreenshotFiles: [], closingScreenshotFiles: [],
+            openingScreenshotLinks: [], closingScreenshotLinks: []
+          });
 
-    return (
-      <div style={{ padding: "20px", maxWidth: "800px", margin: "auto" }}>
-        <h2>New Trade Entry</h2>
-        <input type="hidden" name="tradeId" value={formData.tradeId} />
-        <form onSubmit={handleSubmit}>
-          <label>Date: <input type="date" name="date" value={formData.date} onChange={handleChange} required /></label>
-          <label>Direction:
-            <select name="direction" value={formData.direction} onChange={handleChange} required>
-              <option value="">Select</option>
-              <option value="Long">Long</option>
-              <option value="Short">Short</option>
-            </select>
-          </label>
-          <label>R/R:
-            <select name="rr" value={formData.rr} onChange={handleChange}>
-              <option value="">(optional)</option>
-              <option>1R</option>
-              <option>1.5R</option>
-              <option>2R</option>
-              <option>2.5R</option>
-              <option>3R</option>
-              <option>3R+</option>
-            </select>
-          </label>
-          <label>Entry Price: <input type="number" step="any" name="entry" value={formData.entry} onChange={handleChange} required /></label>
-          <label>Entry Tag:
-            <select name="entryTag" value={formData.entryTag} onChange={handleChange}>
-              <option value="">(optional)</option>
-              <option>Good Entry - After Liquidity Sweep</option>
-              <option>Good Entry - at OB</option>
-              <option>Good Entry - at New High/Low</option>
-              <option>Entered Early - Before New High/Low</option>
-              <option>Entered Late - After High/Low</option>
-              <option>Bull Momentum Trade + MAC</option>
-              <option>Bull Momentum Trade + Spoofs</option>
-              <option>Bear Momentum Trade + Spoofs</option>
-            </select>
-          </label>
-          <label>Exit Price: <input type="number" step="any" name="exit" value={formData.exit} onChange={handleChange} /></label>
-          <label>Exit Tag:
-            <select name="exitTag" value={formData.exitTag} onChange={handleChange}>
-              <option value="">(optional)</option>
-              <option>Premature Exit at Loss/Near Entry</option>
-              <option>Stopped Out in Significant Profit</option>
-              <option>Held to Target</option>
-              <option>1R Breakeven</option>
-              <option>Stop Loss Hit</option>
-            </select>
-          </label>
-          <label>Taker Ratio:
-            <select name="takerRatio" value={formData.takerRatio} onChange={handleChange}>
-              <option value="">(optional)</option>
-              <option>Strong Buy</option>
-              <option>Strong Sell</option>
-            </select>
-          </label>
-          <label>Divergences:
-            <select name="divergences" value={formData.divergences} onChange={handleChange}>
-              <option value="">(optional)</option>
-              <option>4H Bulldiv</option>
-              <option>4H Bulldiv + 1D Bulldiv</option>
-              <option>4H Beardiv</option>
-              <option>4H Beardiv + 1D Beardiv</option>
-            </select>
-          </label>
-          <label>MAC Eclipse:
-            <select name="macEclipse" value={formData.macEclipse} onChange={handleChange}>
-              <option value="">(optional)</option>
-              <option>Yes</option>
-              <option>No</option>
-            </select>
-          </label>
-          <label>Setup Description (optional):</label>
-          <textarea name="setup" value={formData.setup} onChange={handleChange} />
-          <label>Opening Notes:</label>
-          <textarea name="openingNotes" value={formData.openingNotes} onChange={handleChange} />
-          <label>Notes (Emotions, Mistakes, Outcome):</label>
-          <textarea name="notes" value={formData.notes} onChange={handleChange} />
-          <label>Upload Opening Screenshots: <input type="file" name="openingScreenshotFiles" multiple onChange={handleChange} /></label>
-          <label>Upload Closing Screenshots: <input type="file" name="closingScreenshotFiles" multiple onChange={handleChange} /></label>
-          <button type="submit">Save Entry</button>
-        </form>
+          document.querySelector("input[name='openingScreenshotFiles']").value = "";
+          document.querySelector("input[name='closingScreenshotFiles']").value = "";
+        };
 
-        <h3>Saved Entries</h3>
-        {entries.map((entry, idx) => (
-          <div key={idx} className="entry">
-            <strong>{entry.date}</strong> — {entry.direction} | P&L: {typeof entry.pnl === 'number' ? (entry.pnl >= 0 ? '+' : '') + entry.pnl.toFixed(2) : 'N/A'}<br />
-            Entry: {entry.entry} | Exit: {entry.exit || '(open)'}<br />
-            Entry Tag: {entry.entryTag} | Exit Tag: {entry.exitTag}<br />
-            Taker Ratio: {entry.takerRatio} | Divergences: {entry.divergences} | MAC Eclipse: {entry.macEclipse}<br />
-            Setup: {entry.setup}<br />
-            Opening Notes: {entry.openingNotes}<br />
-            Notes: {entry.notes}<br />
-            <div>
-              {entry.openingScreenshotLinks.map((link, i) => (
-                <a key={`open-${i}`} href={link} target="_blank" rel="noopener noreferrer">Opening Link {i + 1}</a>
-              ))}
-            </div>
-            <div>
-              {entry.closingScreenshotLinks.map((link, i) => (
-                <a key={`close-${i}`} href={link} target="_blank" rel="noopener noreferrer">Closing Link {i + 1}</a>
-              ))}
-            </div>
-            <button onClick={() => setFormData(entry)}>Edit Entry</button>
-            <input type="hidden" name="tradeId" value={entry.tradeId} />
+        return (
+          <div style={{ padding: "20px", maxWidth: "800px", margin: "auto" }}>
+            <h2>New Trade Entry</h2>
+            <input type="hidden" name="tradeId" value={formData.tradeId} />
+            <form onSubmit={handleSubmit}>
+              <label>Date: <input type="date" name="date" value={formData.date} onChange={handleChange} required /></label>
+              <label>Direction:
+                <select name="direction" value={formData.direction} onChange={handleChange} required>
+                  <option value="">Select</option>
+                  <option value="Long">Long</option>
+                  <option value="Short">Short</option>
+                </select>
+              </label>
+              <label>R/R:
+                <select name="rr" value={formData.rr} onChange={handleChange}>
+                  <option value="">(optional)</option>
+                  <option>1R</option>
+                  <option>1.5R</option>
+                  <option>2R</option>
+                  <option>2.5R</option>
+                  <option>3R</option>
+                  <option>3R+</option>
+                </select>
+              </label>
+              <label>Entry Price: <input type="number" step="any" name="entry" value={formData.entry} onChange={handleChange} required /></label>
+              <label>Entry Tag:
+                <select name="entryTag" value={formData.entryTag} onChange={handleChange}>
+                  <option value="">(optional)</option>
+                  <option>Good Entry - After Liquidity Sweep</option>
+                  <option>Good Entry - at OB</option>
+                  <option>Good Entry - at New High/Low</option>
+                  <option>Entered Early - Before New High/Low</option>
+                  <option>Entered Late - After High/Low</option>
+                  <option>Bull Momentum Trade + MAC</option>
+                  <option>Bull Momentum Trade + Spoofs</option>
+                  <option>Bear Momentum Trade + Spoofs</option>
+                </select>
+              </label>
+              <label>Exit Price: <input type="number" step="any" name="exit" value={formData.exit} onChange={handleChange} /></label>
+              <label>Exit Tag:
+                <select name="exitTag" value={formData.exitTag} onChange={handleChange}>
+                  <option value="">(optional)</option>
+                  <option>Premature Exit at Loss/Near Entry</option>
+                  <option>Stopped Out in Significant Profit</option>
+                  <option>Held to Target</option>
+                  <option>1R Breakeven</option>
+                  <option>Stop Loss Hit</option>
+                </select>
+              </label>
+              <label>Taker Ratio:
+                <select name="takerRatio" value={formData.takerRatio} onChange={handleChange}>
+                  <option value="">(optional)</option>
+                  <option>Strong Buy</option>
+                  <option>Strong Sell</option>
+                </select>
+              </label>
+              <label>Divergences:
+                <select name="divergences" value={formData.divergences} onChange={handleChange}>
+                  <option value="">(optional)</option>
+                  <option>4H Bulldiv</option>
+                  <option>4H Bulldiv + 1D Bulldiv</option>
+                  <option>4H Beardiv</option>
+                  <option>4H Beardiv + 1D Beardiv</option>
+                </select>
+              </label>
+              <label>MAC Eclipse:
+                <select name="macEclipse" value={formData.macEclipse} onChange={handleChange}>
+                  <option value="">(optional)</option>
+                  <option>Yes</option>
+                  <option>No</option>
+                </select>
+              </label>
+              <label>Setup Description (optional):</label>
+              <textarea name="setup" value={formData.setup} onChange={handleChange} />
+              <label>Opening Notes:</label>
+              <textarea name="openingNotes" value={formData.openingNotes} onChange={handleChange} />
+              <label>Notes (Emotions, Mistakes, Outcome):</label>
+              <textarea name="notes" value={formData.notes} onChange={handleChange} />
+              <label>Upload Opening Screenshots: <input type="file" name="openingScreenshotFiles" multiple onChange={handleChange} /></label>
+              <label>Upload Closing Screenshots: <input type="file" name="closingScreenshotFiles" multiple onChange={handleChange} /></label>
+              <button type="submit">Save Entry</button>
+            </form>
+
+            <h3>Saved Entries</h3>
+            {entries.map((entry, idx) => (
+              <div key={idx} className="entry">
+                <strong>{entry.date}</strong> — {entry.direction} | P&L: {typeof entry.pnl === 'number' ? (entry.pnl >= 0 ? '+' : '') + entry.pnl.toFixed(2) : 'N/A'}<br />
+                Entry: {entry.entry} | Exit: {entry.exit || '(open)'}<br />
+                Entry Tag: {entry.entryTag} | Exit Tag: {entry.exitTag}<br />
+                Taker Ratio: {entry.takerRatio} | Divergences: {entry.divergences} | MAC Eclipse: {entry.macEclipse}<br />
+                Setup: {entry.setup}<br />
+                Opening Notes: {entry.openingNotes}<br />
+                Notes: {entry.notes}<br />
+                <div>
+                  {entry.openingScreenshotLinks.map((link, i) => (
+                    <a key={`open-${i}`} href={link} target="_blank" rel="noopener noreferrer">Opening Link {i + 1}</a>
+                  ))}
+                </div>
+                <div>
+                  {entry.closingScreenshotLinks.map((link, i) => (
+                    <a key={`close-${i}`} href={link} target="_blank" rel="noopener noreferrer">Closing Link {i + 1}</a>
+                  ))}
+                </div>
+                <button onClick={() => setFormData(entry)}>Edit Entry</button>
+                <input type="hidden" name="tradeId" value={entry.tradeId} />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    );
-  }
+        );
+      }
 
-  ReactDOM.render(<TradeJournalForm />, document.getElementById("root"));
-</script>
+      ReactDOM.render(<TradeJournalForm />, document.getElementById("root"));
+    </script>
+  </body>
+</html>
