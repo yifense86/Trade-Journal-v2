@@ -1,16 +1,151 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>React Test</title>
-    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  </head>
-  <body style="background:#111;color:white;padding:20px;">
-    <div id="root"></div>
-    <script type="text/babel" data-presets="env,react">
-      ReactDOM.render(<h1>Hello from GitHub Pages + React!</h1>, document.getElementById('root'));
-    </script>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Trade Journal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #333;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Trade Journal Submission</h1>
+  <form id="tradeForm">
+    <label>Date
+      <input type="date" name="date" required />
+    </label>
+
+    <label>Direction
+      <select name="direction" required>
+        <option value="">Select</option>
+        <option>Long</option>
+        <option>Short</option>
+      </select>
+    </label>
+
+    <label>Entry Price
+      <input type="number" step="0.01" name="entry" required />
+    </label>
+
+    <label>Exit Price
+      <input type="number" step="0.01" name="exit" required />
+    </label>
+
+    <label>Risk/Reward Ratio
+      <input type="text" name="rr" />
+    </label>
+
+    <label>PNL
+      <input type="text" name="pnl" />
+    </label>
+
+    <label>Entry Tag
+      <select name="entryTag">
+        <option value="">(optional)</option>
+        <option>Good Entry - After Liquidity Sweep</option>
+        <option>Good Entry - at OB</option>
+        <option>Good Entry - at New High/Low</option>
+        <option>Entered Early - Before New High/Low</option>
+        <option>Entered Late - After High/Low</option>
+        <option>Bull Momentum Trade + MAC</option>
+        <option>Bull Momentum Trade + Spoofs</option>
+        <option>Bear Momentum Trade + Spoofs</option>
+      </select>
+    </label>
+
+    <label>Exit Tag
+      <select name="exitTag">
+        <option value="">(optional)</option>
+        <option>Premature Exit at Loss/Near Entry</option>
+        <option>Stopped Out in Significant Profit</option>
+        <option>Held to Target</option>
+        <option>1R Breakeven</option>
+        <option>Stop Loss Hit</option>
+      </select>
+    </label>
+
+    <label>Taker Ratio
+      <select name="takerRatio">
+        <option value="">(optional)</option>
+        <option>Strong Buy</option>
+        <option>Strong Sell</option>
+      </select>
+    </label>
+
+    <label>Divergences
+      <select name="divergences">
+        <option value="">(optional)</option>
+        <option>4H Bulldiv</option>
+        <option>4H Bulldiv + 1D Bulldiv</option>
+        <option>4H Beardiv</option>
+        <option>4H Beardiv + 1D Beardiv</option>
+      </select>
+    </label>
+
+    <label>MAC Eclipse
+      <select name="macEclipse">
+        <option value="">(optional)</option>
+        <option>Yes</option>
+        <option>No</option>
+      </select>
+    </label>
+
+    <label>Setup Description
+      <textarea name="setup" rows="3"></textarea>
+    </label>
+
+    <label>Opening Notes
+      <textarea name="openingNotes" rows="3"></textarea>
+    </label>
+
+    <label>Notes (Emotions, Mistakes, Outcome)
+      <textarea name="notes" rows="4"></textarea>
+    </label>
+
+    <label>Entry Screenshot Links (Google Drive Share Links)
+      <textarea name="openingScreenshotLinks" rows="3" placeholder="One link per line"></textarea>
+    </label>
+
+    <label>Closing Screenshot Links (Google Drive Share Links)
+      <textarea name="closingScreenshotLinks" rows="3" placeholder="One link per line"></textarea>
+    </label>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <script src="script.js"></script>
+</body>
 </html>
